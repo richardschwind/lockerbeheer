@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     "95.111.250.181",
     "localhost",
     "127.0.0.1",
+    "192.168.178.47",
 ]
 
 INSTALLED_APPS = [
@@ -87,11 +88,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+CHANNEL_LAYER = config("CHANNEL_LAYER", default="inmemory")
+
+if CHANNEL_LAYER == "redis":
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [config("REDIS_URL")],
+            },
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
 
 # Database
 DATABASES = {

@@ -144,7 +144,11 @@ class PiSyncView(viewsets.ViewSet):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
+        logger.info("Pi sync request body: %s", request.data)
         serializer = PiSyncRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            logger.warning("Pi sync validation errors: %s", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.is_valid(raise_exception=True)
 
         events_data = serializer.validated_data['events']

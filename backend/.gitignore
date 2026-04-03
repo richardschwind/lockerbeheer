@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Django static files (server-generated)
+backend/staticfiles/
+staticfiles/
+
+# Environment variables
+.env
+.env.*
+
+# macOS rommel
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Docker
+*.log
+

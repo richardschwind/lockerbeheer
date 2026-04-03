@@ -12,7 +12,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-secret-key')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-
 def parse_allowed_hosts(value: str):
     value = (value or '').strip()
     if not value:
@@ -122,7 +121,7 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = '/var/www/lockerbeheer/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 

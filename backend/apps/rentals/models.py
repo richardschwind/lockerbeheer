@@ -6,7 +6,7 @@ from apps.users.models import LockerUser
 
 
 class Rental(models.Model):
-    """Huurovereenkomst tussen een lockergebruiker en een locker."""
+    """Huurovereenkomst tussen een lockergebruiker en een locker. waarvan alles giesd is """
 
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Actief'

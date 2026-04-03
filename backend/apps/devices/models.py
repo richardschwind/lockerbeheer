@@ -57,6 +57,7 @@ class AccessEvent(models.Model):
     class CredentialType(models.TextChoices):
         NFC = 'nfc', 'NFC-tag'
         PIN = 'pin', 'PIN-code'
+        CASH = 'cash', ''
         SYSTEM = 'system', 'Systeem'
 
     class EventStatus(models.TextChoices):

@@ -12,6 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-secret-key')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+
 def parse_allowed_hosts(value: str):
     value = (value or '').strip()
     if not value:
@@ -84,14 +85,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
-
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [REDIS_URL],
-        },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     }
 }
 

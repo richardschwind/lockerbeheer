@@ -35,9 +35,7 @@ class Locker(models.Model):
 
     class Status(models.TextChoices):
         AVAILABLE = 'available', 'Beschikbaar'
-        OCCUPIED = 'occupied', 'Bezet (algemeen)'
-        OCCUPIED_PIN = 'occupied_pin', 'Bezet via PIN'
-        OCCUPIED_NFC = 'occupied_nfc', 'Bezet via NFC'
+        OCCUPIED = 'occupied', 'Bezet'
         MAINTENANCE = 'maintenance', 'Onderhoud'
         RESERVED = 'reserved', 'Gereserveerd'
 

@@ -29,9 +29,11 @@ def parse_allowed_hosts(value: str):
     return [host.strip() for host in value.split(',') if host.strip()]
 
 
-ALLOWED_HOSTS = parse_allowed_hosts(
-    config('ALLOWED_HOSTS', default='localhost,127.0.0.1,backend,192.168.178.47')
-)
+ALLOWED_HOSTS = [
+    "95.111.250.181",
+    "localhost",
+    "127.0.0.1",
+]
 
 INSTALLED_APPS = [
     'daphne',

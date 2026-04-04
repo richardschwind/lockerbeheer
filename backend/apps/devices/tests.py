@@ -394,3 +394,38 @@ class LockerSignalTests(APITestCase):
         locker.delete()
 
         mock_broadcast.assert_called_once_with(self.company.id)
+
+
+class WhitelistBroadcastTests(APITestCase):
+    @patch('apps.devices.pi_signal.async_to_sync')
+    @patch('apps.devices.pi_signal.get_channel_layer')
+    def test_company_broadcast_failure_is_non_fatal(self, mock_get_channel_layer, mock_async_to_sync):
+        mock_get_channel_layer.return_value = object()
+        mock_async_to_sync.return_value.side_effect = RuntimeError('redis down')
+
+        from apps.devices.pi_signal import broadcast_whitelist_changed
+
+        result = broadcast_whitelist_changed(company_id=1)
+
+        self.assertFalse(result)
+
+    @patch('apps.devices.pi_signal.async_to_sync')
+    @patch('apps.devices.pi_signal.get_channel_layer')
+    def test_targeted_broadcast_failure_is_non_fatal(self, mock_get_channel_layer, mock_async_to_sync):
+        company = Company.objects.create(name='ACME')
+        location = LockerLocation.objects.create(name='HQ', company=company)
+        RaspberryPi.objects.create(
+            company=company,
+            name='Pi 01',
+            unique_code='pi-01',
+            location=location,
+            is_active=True,
+        )
+        mock_get_channel_layer.return_value = object()
+        mock_async_to_sync.return_value.side_effect = RuntimeError('redis down')
+
+        from apps.devices.pi_signal import broadcast_whitelist_changed
+
+        result = broadcast_whitelist_changed(company_id=company.id, pi_unique_code='pi-01')
+
+        self.assertFalse(result)

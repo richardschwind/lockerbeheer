@@ -1,7 +1,9 @@
 import logging
 from datetime import datetime
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+
 from apps.devices.models import RaspberryPi
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ def broadcast_whitelist_changed(company_id, pi_unique_code=None):
     channel_layer = get_channel_layer()
     if not channel_layer:
         logger.warning("No channel layer available")
-        return
+        return False
 
     message = {
         'type': 'whitelist_changed',
@@ -34,14 +36,25 @@ def broadcast_whitelist_changed(company_id, pi_unique_code=None):
                 message,
             )
             logger.info("Sent whitelist_changed to specific Pi %s", pi_unique_code)
-            return
+            return True
         except RaspberryPi.DoesNotExist:
             logger.warning("No Pi found with unique_code=%s", pi_unique_code)
-            return
+            return False
+        except Exception:
+            logger.exception(
+                "Failed to send whitelist_changed to specific Pi %s",
+                pi_unique_code,
+            )
+            return False
 
     # 🎯 2. Broadcast → stuur naar alle Pi's van de company
-    async_to_sync(channel_layer.group_send)(
-        f'pi_sync_{company_id}',
-        message,
-    )
-    logger.info("Broadcast whitelist_changed to company %s", company_id)
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f'pi_sync_{company_id}',
+            message,
+        )
+        logger.info("Broadcast whitelist_changed to company %s", company_id)
+        return True
+    except Exception:
+        logger.exception("Failed to broadcast whitelist_changed to company %s", company_id)
+        return False

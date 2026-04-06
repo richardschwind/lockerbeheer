@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { lockersApi, rentalsApi } from '../api'
+import { buildAccessEventsWebSocketUrl } from '../api/ws'
 
 const LOCKER_STATE_LABELS = {
   free: 'Vrij',
@@ -70,9 +71,7 @@ export default function DashboardPage() {
     let isUnmounted = false
 
     const connect = () => {
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsHost = `${window.location.hostname}:8000`
-      const wsUrl = `${wsProtocol}://${wsHost}/ws/access-events/?token=${encodeURIComponent(token)}`
+      const wsUrl = buildAccessEventsWebSocketUrl(token)
 
       setSocketStatus('connecting')
       socket = new WebSocket(wsUrl)

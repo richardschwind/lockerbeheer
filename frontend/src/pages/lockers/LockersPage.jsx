@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { lockersApi } from '../../api'
+import { buildAccessEventsWebSocketUrl } from '../../api/ws'
 
 const STATUS_COLORS = {
   available: 'bg-green-100 text-green-800',
@@ -46,9 +47,7 @@ export default function LockersPage() {
     }
 
     const connect = () => {
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsHost = `${window.location.hostname}:8000`
-      const wsUrl = `${wsProtocol}://${wsHost}/ws/access-events/?token=${encodeURIComponent(token)}`
+      const wsUrl = buildAccessEventsWebSocketUrl(token)
 
       setSocketStatus('connecting')
       socket = new WebSocket(wsUrl)

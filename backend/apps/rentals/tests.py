@@ -4,6 +4,7 @@ from django.test import TestCase
 from apps.devices.models import AccessEvent, RaspberryPi
 from apps.lockers.models import Locker, LockerLocation
 from apps.rentals.models import Rental
+from apps.rentals.serializers import RentalSerializer
 from apps.users.models import Company, LockerUser, User
 
 
@@ -85,3 +86,40 @@ class RentalValidationTests(TestCase):
         rental.status = Rental.Status.ACTIVE
         with self.assertRaises(ValidationError):
             rental.save()
+
+    def test_serializer_rejects_reactivate_when_pin_is_still_reported(self):
+        locker = Locker.objects.create(
+            number='3',
+            location=self.location,
+            status=Locker.Status.AVAILABLE,
+        )
+        rental = Rental.objects.create(
+            locker_user=self.locker_user,
+            locker=locker,
+            status=Rental.Status.ACTIVE,
+            start_date='2026-04-02',
+        )
+
+        AccessEvent.objects.create(
+            raspberry_pi=self.pi,
+            locker=locker,
+            locker_number=3,
+            credential_type=AccessEvent.CredentialType.PIN,
+            credential_value='9876',
+            locker_state=AccessEvent.LockerState.OCCUPIED_PIN,
+            status=AccessEvent.EventStatus.SUCCESS,
+            message='PIN actief',
+            synced_at='2026-04-02T12:05:00Z',
+            pi_timestamp='2026-04-02T12:05:00Z',
+        )
+
+        rental.status = Rental.Status.ENDED
+        rental.save()
+
+        serializer = RentalSerializer(
+            instance=rental,
+            data={'status': Rental.Status.ACTIVE},
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())

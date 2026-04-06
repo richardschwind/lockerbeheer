@@ -12,6 +12,7 @@ export default function RentalsPage() {
   const { user } = useAuth()
   const [rentals, setRentals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submittingId, setSubmittingId] = useState(null)
 
   const canManageRentals = ['superadmin', 'company_admin'].includes(user?.role) || user?.is_superuser
 
@@ -30,10 +31,27 @@ export default function RentalsPage() {
     loadPageData()
   }, [])
 
-  const handleEnd = async (id) => {
-    if (!confirm('Wil je deze huurovereenkomst beëindigen?')) return
-    await rentalsApi.end(id)
-    loadPageData()
+  const handleStatusChange = async (id, nextStatus) => {
+    const isEnding = nextStatus === 'ended'
+    const confirmed = confirm(
+      isEnding
+        ? 'Wil je deze huurovereenkomst beëindigen?'
+        : 'Wil je deze huurovereenkomst opnieuw actief maken?'
+    )
+    if (!confirmed) return
+
+    setSubmittingId(id)
+
+    try {
+      if (isEnding) {
+        await rentalsApi.end(id)
+      } else {
+        await rentalsApi.activate(id)
+      }
+      loadPageData()
+    } finally {
+      setSubmittingId(null)
+    }
   }
 
   return (
@@ -95,12 +113,22 @@ export default function RentalsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {r.status === 'active' && (
+                      {canManageRentals && r.status === 'active' && (
                         <button
-                          onClick={() => handleEnd(r.id)}
-                          className="text-xs text-red-600 hover:underline"
+                          onClick={() => handleStatusChange(r.id, 'ended')}
+                          disabled={submittingId === r.id}
+                          className="text-xs text-red-600 hover:underline disabled:text-gray-400 disabled:no-underline"
                         >
                           Beëindigen
+                        </button>
+                      )}
+                      {canManageRentals && r.status !== 'active' && (
+                        <button
+                          onClick={() => handleStatusChange(r.id, 'active')}
+                          disabled={submittingId === r.id}
+                          className="text-xs text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+                        >
+                          Actief maken
                         </button>
                       )}
                     </td>

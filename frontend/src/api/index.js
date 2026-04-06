@@ -34,6 +34,7 @@ export const rentalsApi = {
   create: (data) => api.post('/rentals/', data),
   update: (id, data) => api.patch(`/rentals/${id}/`, data),
   end: (id) => api.patch(`/rentals/${id}/`, { status: 'ended' }),
+  activate: (id) => api.patch(`/rentals/${id}/`, { status: 'active' }),
 }
 
 export const usersApi = {

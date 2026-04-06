@@ -29,12 +29,28 @@ def parse_allowed_hosts(value: str):
     return [host.strip() for host in value.split(',') if host.strip()]
 
 
-ALLOWED_HOSTS = [
-    "95.111.250.181",
-    "localhost",
-    "127.0.0.1",
-    "192.168.178.47",
-]
+def parse_list_setting(value: str):
+    value = (value or '').strip()
+    if not value:
+        return []
+
+    if value.startswith('[') and value.endswith(']'):
+        try:
+            parsed = ast.literal_eval(value)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except (ValueError, SyntaxError):
+            pass
+
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+ALLOWED_HOSTS = parse_allowed_hosts(
+    config(
+        'ALLOWED_HOSTS',
+        default='95.111.250.181,localhost,127.0.0.1,192.168.178.47',
+    )
+)
 
 INSTALLED_APPS = [
     'daphne',
@@ -89,13 +105,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 CHANNEL_LAYER = config("CHANNEL_LAYER", default="inmemory")
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
 
 if CHANNEL_LAYER == "redis":
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [("127.0.0.1", 6379)],
+                "hosts": [REDIS_URL],
             },
         }
     }
@@ -159,11 +176,19 @@ SIMPLE_JWT = {
 }
 
 # CORS – in productie aanpassen naar specifiek domein
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://192.168.178.47:5173',
-]
+CORS_ALLOWED_ORIGINS = parse_list_setting(
+    config(
+        'CORS_ALLOWED_ORIGINS',
+        default='http://localhost:5173,http://127.0.0.1:5173,http://192.168.178.47:5173,http://95.111.250.181',
+    )
+)
+
+CSRF_TRUSTED_ORIGINS = parse_list_setting(
+    config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='http://95.111.250.181',
+    )
+)
 
 # Logging configuration
 LOGGING = {

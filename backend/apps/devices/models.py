@@ -29,6 +29,7 @@ class RaspberryPi(models.Model):
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.OFFLINE)
     last_sync = models.DateTimeField(null=True, blank=True, verbose_name='Laatste synchronisatie')
+    last_whitelist_ack_at = models.DateTimeField(null=True, blank=True, verbose_name='Laatste whitelist bevestiging')
     last_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name='Laatst bekende IP')
     is_active = models.BooleanField(default=True)
     notes = models.TextField(blank=True)

@@ -429,3 +429,15 @@ class WhitelistBroadcastTests(APITestCase):
         result = broadcast_whitelist_changed(company_id=company.id, pi_unique_code='pi-01')
 
         self.assertFalse(result)
+
+    @patch('apps.devices.pi_signal.async_to_sync')
+    @patch('apps.devices.pi_signal.get_channel_layer')
+    def test_lockers_refresh_broadcast_failure_is_non_fatal(self, mock_get_channel_layer, mock_async_to_sync):
+        mock_get_channel_layer.return_value = object()
+        mock_async_to_sync.return_value.side_effect = RuntimeError('redis down')
+
+        from apps.devices.pi_signal import broadcast_lockers_refresh
+
+        result = broadcast_lockers_refresh(company_id=1)
+
+        self.assertFalse(result)

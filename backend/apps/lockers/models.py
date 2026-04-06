@@ -47,6 +47,7 @@ class Locker(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
     floor = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
+    whitelist_changed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

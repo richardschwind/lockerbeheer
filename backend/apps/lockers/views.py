@@ -55,7 +55,7 @@ class LockerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Locker.objects.select_related('location', 'location__company').all()
+        qs = Locker.objects.select_related('location', 'location__company').prefetch_related('location__raspberry_pis').all()
         if user.is_superuser or user.role == 'superadmin':
             return qs
         return qs.filter(location__company=user.company)

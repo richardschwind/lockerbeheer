@@ -1,11 +1,15 @@
 import json
 import logging
 from urllib.parse import parse_qs
+
 from channels.generic.websocket import AsyncJsonWebsocketConsumer, AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.core.cache import cache
 from django.contrib.auth.models import AnonymousUser
+from django.utils import timezone
+
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
+
 from .models import RaspberryPi
 from apps.users.models import User
 
@@ -75,6 +79,14 @@ class AccessEventsConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'access_events_batch',
                 'events': event.get('events', []),
                 'count': event.get('count', 0),
+            }
+        )
+
+    async def lockers_refresh(self, event):
+        await self.send_json(
+            {
+                'type': 'lockers_refresh',
+                'timestamp': event.get('timestamp'),
             }
         )
 
@@ -150,6 +162,8 @@ class PiSyncConsumer(AsyncWebsocketConsumer):
 
             if message_type == 'register_pi':
                 await self._handle_register_pi(data)
+            elif message_type == 'whitelist_applied':
+                await self._handle_whitelist_applied(data)
             else:
                 logger.warning("Unknown Pi websocket message type=%s", message_type)
                 await self.send(
@@ -195,6 +209,37 @@ class PiSyncConsumer(AsyncWebsocketConsumer):
             })
         )
 
+    async def _handle_whitelist_applied(self, data):
+        ack_time = timezone.now()
+        await sync_to_async(self._mark_whitelist_ack)(self.pi.id, ack_time)
+        await self.channel_layer.group_send(
+            f'access_events_company_{self.pi.company_id}',
+            {
+                'type': 'lockers.refresh',
+                'timestamp': ack_time.isoformat(),
+            }
+        )
+        await self.channel_layer.group_send(
+            'access_events_global',
+            {
+                'type': 'lockers.refresh',
+                'timestamp': ack_time.isoformat(),
+            }
+        )
+
+        logger.info(
+            "Pi confirmed whitelist apply (pi_name=%s, company_id=%s)",
+            getattr(self.pi, 'name', 'unknown'),
+            getattr(self.pi, 'company_id', None),
+        )
+
+        await self.send(
+            text_data=json.dumps({
+                'type': 'whitelist_applied_ack',
+                'timestamp': ack_time.isoformat(),
+            })
+        )
+
     async def whitelist_changed(self, event):
         """Broadcast whitelist_changed message."""
         target_pi_code = event.get('pi_unique_code')
@@ -234,3 +279,7 @@ class PiSyncConsumer(AsyncWebsocketConsumer):
         except RaspberryPi.DoesNotExist:
             logger.warning(f"No active Pi found with key: {pi_key}")
             return None
+
+    @staticmethod
+    def _mark_whitelist_ack(pi_id, ack_time):
+        RaspberryPi.objects.filter(id=pi_id).update(last_whitelist_ack_at=ack_time)

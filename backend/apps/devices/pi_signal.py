@@ -58,3 +58,27 @@ def broadcast_whitelist_changed(company_id, pi_unique_code=None):
     except Exception:
         logger.exception("Failed to broadcast whitelist_changed to company %s", company_id)
         return False
+
+
+def broadcast_lockers_refresh(company_id):
+    channel_layer = get_channel_layer()
+    if not channel_layer:
+        logger.warning("No channel layer available")
+        return False
+
+    message = {
+        'type': 'lockers.refresh',
+        'timestamp': datetime.utcnow().isoformat(),
+    }
+
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f'access_events_company_{company_id}',
+            message,
+        )
+        async_to_sync(channel_layer.group_send)('access_events_global', message)
+        logger.info("Broadcast lockers_refresh to company %s", company_id)
+        return True
+    except Exception:
+        logger.exception("Failed to broadcast lockers_refresh to company %s", company_id)
+        return False
